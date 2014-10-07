@@ -1,0 +1,27 @@
+<ASSEMBLER_INFO>
+ <VERSION>2.1.52</VERSION>
+ <DEVICE>"ATmega16A"</DEVICE>
+ <WORKING_DIR>\\psf\Home\Downloads\lab02_inout\inout\Debug</WORKING_DIR>
+ <INCLUDE_PATH>
+  <DIR>C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR Assembler\Native\2.1.1117\avrassembler\Include</DIR>
+  <DIR></DIR>
+ </INCLUDE_PATH>
+ <SOURCE_FILE>\\psf\Home\Downloads\lab02_inout\inout\inout.asm</SOURCE_FILE>
+ <INCLUDED_FILES>
+  <FILE>C:\Program Files (x86)\Atmel\Atmel Toolchain\AVR Assembler\Native\2.1.1117\avrassembler\Include\m16Adef.inc</FILE>
+ </INCLUDED_FILES>
+ <OBJECT_FILES>
+  <FILE>\\psf\Home\Downloads\lab02_inout\inout\Debug/inout.obj</FILE>
+ </OBJECT_FILES>
+ <HEX_FILES>
+  <FILE>inout.hex</FILE>
+ </HEX_FILES>
+ <OUTPUT_FILES>
+  <FILE>inout.map</FILE>
+  <FILE>inout.lss</FILE>
+ </OUTPUT_FILES>
+ <LABELS>
+  <reset><FILE>\\psf\Home\Downloads\lab02_inout\inout\inout.asm</FILE><LINE>21</LINE></reset>
+  <again><FILE>\\psf\Home\Downloads\lab02_inout\inout\inout.asm</FILE><LINE>29</LINE></again>
+ </LABELS>
+</ASSEMBLER_INFO>

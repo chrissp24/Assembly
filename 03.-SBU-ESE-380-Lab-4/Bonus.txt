@@ -1,0 +1,110 @@
+; bonus.asm: Simple program to generate a squarewave at the
+;       highest frequency. One button will generate the wave
+;       while it's being held the other button will generate
+;       10 cycles of the pulse and stop at a low output 
+;       awaiting the next time the button is pressed.
+;
+; inputs: PBSW1 and PBSW3, PC0 and PC6
+; outputs: PA1
+;
+; assumes: nothing
+; alters: r16, r17, r19
+;
+; Author: Paultre/Saied  10/01/14
+; Lab Number: 4
+; Lab Section: 4
+; Lab Bench: 5
+
+;Load include file(s) 
+.nolist
+.include "m16Adef.inc"          ;include part specific header
+.list
+
+reset:
+    ;Configure stack pointer
+    ldi r19, HIGH (RAMEND)      ;load high byte of last address
+    out SPH, r19                ;in SRAM into SPH
+    ldi r19, LOW (RAMEND)       ;load low byte of last address
+    out SPL, r19                ;in SRAM into SPL
+    ;Configure bit 1 of port A as output
+    sbi DDRA, 1                 ;set bit 1 of port A as output
+    cbi PORTA, 1                ;initialize bit 1 of port A to 0    
+    ;Configure bit 0 and 6 of port C as input bits
+    cbi DDRC, 0                 ;clear bits 0 and 6 of port C setting 
+    cbi DDRC, 6                 ;them up as inputs  
+    sbi PORTC, 0                ;setting bits 0 and 6 of port C enabling 
+    sbi PORTC, 6                ;their associated pull-up resistors
+    
+delay_1:
+    ;Verifying that the buttons are released
+    sbis PINC, 0                ;skip the next instruction if PINC0 set
+    nop                         ;do nothing
+    sbis PINC, 6                ;skip the next instruction if PINC6 set
+    rjmp delay_1                ;restart the delay_1 loop if buttons are
+                                ;not pressed
+                                
+delay_0:
+    ;Verifying that the buttons are pressed
+    sbis PINC, 0                ;skip the next instruction if PINC0 set
+    rjmp sqwv_1                 ;jump to square wave generation from button 1
+    sbis PINC, 6                ;skip the next instruction if PINC6 set
+    rjmp sqwv_2                 ;jump to square wave generation from button 2
+    rjmp delay_0                ;restart the waiting for button press loop
+
+sqwv_1:
+    sbi PORTA, 1                ;start pulses while switch pressed
+    nop nop nop nop				;keep the output high for as long as it will be low
+    cbi PORTA, 1				;make the output low
+    sbic PINC, 0				;verify that the switch is still pressed
+    rjmp delay_1				;if not go back to checking the switches
+	rjmp sqwv_1					;if still pressed output another pulse
+    
+sqwv_2:
+    rcall delay_10ms            ;wait for switch debouncing
+    sbic PINC, 6                ;confirm that the switch was pressed
+    rjmp delay_0                ;go back and wait for switch press
+    sbi PORTA, 1                ;start train of 10 pulses
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    sbi PORTA, 1
+    cbi PORTA, 1
+    rjmp delay_1                ;go back to checking the switches
+    
+delay_10ms:
+    ;Wait 10ms for the switch to be done bouncing
+    rcall delay                 ;go to a subroutine wasting 1000 clock cycles
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    ret
+    
+delay:
+    ;Subroutine wasting a 1003 clock cycles
+    ldi r17, $F9                ;load r17 with 249 to count down clock cycles
+delay_loop:
+    dec r17                     ;decrement r17
+    nop                         ;waste a clock cycle
+    brne delay_loop             ;restart delay_loop
+    ret                         ;return to the delay_10ms loop
+    

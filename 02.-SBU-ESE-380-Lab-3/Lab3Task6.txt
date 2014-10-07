@@ -1,0 +1,34 @@
+; sqwvgen - Simple square wave generating program
+;
+; inputs - None
+; ouputs - PA0
+;
+; assumes: nothing
+; alters: r16, r17, r18, SREG
+; 
+; Author: KLS/FST
+; Updated: Paultre/Saeid 9/24/14
+; Lab Number: 3
+; Lab Section: 4
+; Lab Station: 5
+; Version: 1.1
+
+; Load include files(s)
+.nolist
+.include "m16Adef.inc"  ;include part specific header file
+.list
+
+reset:
+    ;Configure I/O port... Port-A = Output
+    ldi r16, $FF            ;load r16 with all 1s
+    out DDRA, r16           ;PORTA - all bits configured as outputs
+    cbi PortA,0             ;initialize bit 0 of port A to 0
+    
+main_wave_loop:
+    sbi PortA,0             ;start pulse 'on' period
+    nop                     ;add some delay
+    nop
+    cbi PortA, 0            ;start pulse 'off' period
+    nop                     ;add some delay
+    nop
+    rjmp main_wave_loop     ;repeat forever

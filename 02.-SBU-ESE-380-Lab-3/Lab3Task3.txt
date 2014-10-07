@@ -1,0 +1,51 @@
+; sws_lvl.asm: Simple program to display the number of switches
+;       in the on position. Each switch that is in the on position
+;       will light up an LED on the bargraph. The LEDs on the 
+;       bargraph will light up from the bottom indicating 1 switch
+;       in the on position, going up as more switches are turned on.
+;
+; inputs: DIP-8 switch, PD0 to PD7
+; outputs: Bargraph, 8 LEDs, PB0 to PB7, active low
+;
+; assumes: nothing
+; alters: r16, r17, r18, SREG
+; 
+; Author: KLS/FST
+; Updated: Paultre/Saeid 9/24/14
+; Lab Number: 3
+; Lab Section: 4
+; Lab Station: 5
+; Version: 1.1
+
+; Load include files(s)
+.nolist
+.include "m16Adef.inc"      ;include part specific header
+.list
+
+reset:
+    ;Configure port B as an output port
+    ldi r16, $FF            ;load r16 with all 1s
+    out DDRB, r16           ;port B - all bits configured as outputs
+    ;Configure port D as an input port
+    ldi r16, $00            ;load r16 with all 0s
+    out DDRD, r16           ;port D - all bits configured as inputs
+    ldi r16, $FF            ;enable pull-up resistors by outputting
+    out PORTD, r16          ;all 1s to PORTD
+    
+main_loop:
+    in r16, PIND            ;input switch values
+    ;Code to count switches in '1' position and output to bargraph
+    ldi r17, 8              ;loop parameter for inner loop
+    ldi r18, $00            ;initial value of image to be output to bargraph LEDs
+    
+next_bit:
+    lsl r16                 ;shift msb of r16 into carry
+    brcc dec_bitcounter     ;branch if carry clear
+    ror r18                 ;rotate 1 from carry into bargraph image
+    
+dec_bitcounter:
+    dec r17                 
+    brne next_bit           ;branch if result after decrement is not zero
+    com r18                 ;complement bargraph image
+    out PORTB, r18          ;output image to bargraph
+    rjmp main_loop

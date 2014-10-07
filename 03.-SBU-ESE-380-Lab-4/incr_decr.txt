@@ -1,0 +1,150 @@
+; incr_decr.asm: Simple program to increment and decrement
+;           the BCD count value displayed on the 7-segment
+;           display. One button will increment the count,
+;           another will decrement the count and the last
+;           will reset to initial condition. There also an
+;           LED annunciator letting us one when we went back
+;           to 0 after incrementing from 9.
+;
+; inputs: PBSW1, PBSW2 and PBSW3, PC0, PC6 and PC7
+; outputs: 7-segment display, 8 LEDs, PB0 to PB7, active low
+;          overflow LED annunciator, PA0 active low
+;
+; assumes: nothing
+; alters: r16, r17, r18, r19, r20, r21
+;
+; Author: Paultre/Saied  9/27/14
+; Lab Number: 4
+; Lab Section: 4
+; Lab Bench: 5
+
+;Load include file(s) 
+.nolist
+.include "m16Adef.inc"          ;include part specific header
+.list
+
+reset:
+    ;Configure stack pointer
+    ldi r19, HIGH (RAMEND)      ;load high byte of last address
+    out SPH, r19                ;in SRAM into SPH
+    ldi r19, LOW (RAMEND)       ;load low byte of last address
+    out SPL, r19                ;in SRAM into SPL
+    ;Configure port B as an output port
+    ldi r16, $FF                ;load r16 with all 1s
+    out DDRB, r16               ;port B - all bits configured as outputs
+    ldi r16, $C0                ;load r16 with bit pattern to output 0
+    out PORTB, r16              ;on the 7-segment display
+    ;Configure bit 0, 6 and 7 of port C as input bits
+    cbi DDRC, 0                 ;clear bits 0, 6 and 7 of port C setting 
+    cbi DDRC, 6                 ;them up as inputs  
+    cbi DDRC, 7
+    sbi PORTC, 0                ;setting bits 0, 6 and 7 of port C enabling 
+    sbi PORTC, 6                ;their associated pull-up resistors
+    sbi PORTC, 7
+    ;Configure bit 0 of port A as an output port
+    sbi DDRA, 0                 ;set bit 0 of port A as output
+    ldi r21, $01                ;set bit 0 or r21 to turn the overflow 
+                                ;annunciator LED off
+    out PORTA, r21              ;initialize the overflow LED in the off position
+    ldi r18, $00                ;load all 0s in r18 for future use
+    ldi r20, $00                ;load all 0s in r20 for future use
+    
+delay_1:
+    ;Verifying that the switches are released
+    sbis PINC, 0                ;skip the next instruction if PINC0 set
+    rjmp delay_1                ;restart the delay_1 loop if button released
+    sbis PINC, 6                ;skip the next instruction if PINC6 set
+    rjmp delay_1                ;restart the delay_1 loop if button released
+    sbis PINC, 7                ;skip the next instruction if PINC7 set
+    rjmp delay_1                ;restart the delay_1 loop if button released
+    
+delay_0:
+    ;Verifying that the switch is pressed
+    sbis PINC, 0                ;skip the next instruction if PINC0 set
+    rjmp incr                   ;jump to the increment loop if button pressed
+    sbis PINC, 6                ;skip the next instruction if PINC6 set
+    rjmp decr                   ;jump to the decrement loop if button pressed
+    sbis PINC, 7                ;skip the next instruction in PINC7 set
+    rjmp rst                    ;jump tot he rst loop if button pressed
+    rjmp delay_0                ;restart the waiting for button press loop
+    
+incr:
+    rcall delay_10ms            ;wait for switch debouncing
+    sbic PINC, 0                ;confirm that the switch was pressed
+    rjmp delay_0                ;go back and wait for switch press
+    inc r20                     ;increment r20
+    cpi r20, 10                 ;compare the number in r20 to 10 
+    breq ovflw                  ;branch to overflow loop if r20=10
+    mov r18, r20                ;copy the contents of r20 to r18
+    rjmp bcd_7seg               ;jump to the display loop
+
+ovflw:
+    ldi r20, $00                ;reset r20 value to 0
+    ldi r16, $C0                ;load r16 with bit pattern to output 0
+    out PORTB, r16              ;on the 7-segment display
+    com r21                     ;toggle bit 0 of r21 to either turn on or 
+    out PORTA, r21              ;turn off the overflow annunciator LED
+    rjmp delay_1                ;go back to checking the switches
+
+decr:
+    rcall delay_10ms            ;wait for switch debouncing
+    sbic PINC, 6                ;confirm that the switch was pressed
+    rjmp delay_0                ;go back and wait for switch press
+    dec r20                     ;decrement r20
+    breq zero                   ;branch to zero loop if r20 reaches 0
+    mov r18, r20                ;copy the contents of r20 to r18
+    rjmp bcd_7seg               ;jump to the display loop
+
+zero:
+    ldi r16, $C0                ;load r16 with bit pattern to output 0
+    out PORTB, r16              ;on the 7-segment display
+    rjmp delay_1                ;go back to checking the switches
+
+rst:
+    rcall delay_10ms            ;wait for switch debouncing
+    sbic PINC, 7                ;confirm that the switch was pressed
+    rjmp delay_0                ;go back and wait for switch press
+    ldi r20, $00                ;clear r20 and copy its contents to 
+    mov r18, r20                ;r18 to reset the LED display
+    rjmp bcd_7seg               ;jump to the display loop
+
+delay_10ms:
+    ;Wait 10ms for the switch to be done bouncing
+    rcall delay                 ;go to a subroutine wasting 1000 clock cycles
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    rcall delay
+    ret
+    
+delay:
+    ;Subroutine wasting a 1003 clock cycles
+    ldi r17, $F9                ;load r17 with 249 to count down clock cycles
+delay_loop:
+    dec r17                     ;decrement r17
+    nop                         ;waste a clock cycle
+    brne delay_loop             ;restart delay_loop
+    ret                         ;return to the delay_10ms loop
+    
+    ;Code to perform table loop, 1s count in r18 is offset
+    ;into table 7-segment bit patterns
+bcd_7seg:
+    ldi ZH, high (table * 2)    ;set Z to point to start of table
+    ldi ZL, low (table * 2)     ;
+    ldi r16, $00                ;clear for later use
+    add ZL, r18                 ;add low byte
+    adc ZH, r16                 ;add in the carry
+    lpm r18, Z                  ;load bit pattern from table into r18
+display:
+    out PORTB, r18              ;output pattern for 7-seg display count
+    rjmp delay_1                ;jump back to read the switches again
+    
+    ;table of 7-segment bit patterns to display digits 0-9
+table: .db $C0,$F9,$A4,$B0,$99,$92,$82,$F8,$80,$90
+           ; 0   1   2   3   4   5   6   7   8   9  ?A? . . .   
+    
