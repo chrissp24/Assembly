@@ -1,4 +1,4 @@
-; duty_cycle.asm: Simple program that generates a variable duty cycle pulse
+; duty_cycle.asm: Simple program that generates a variable duty cycle pulses
 ;           waveform. The duty cycle will range from 10% to 90% and will be 
 ;           adjustable in 10% increments. The duty cycle is user settable 
 ;           via BCD value provided on the lower nibble of the DIP switch. 
