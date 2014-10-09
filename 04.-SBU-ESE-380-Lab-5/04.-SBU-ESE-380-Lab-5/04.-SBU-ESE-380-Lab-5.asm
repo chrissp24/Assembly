@@ -95,7 +95,7 @@ duty_cycle:
 10%:
     sbi PORTA, 0                ;start of the pulse
     rcall delay_100us           ;wait 100 us
-    cbi PORTA, 0                ;end of pulse
+    cbi PORTA, 0                ;end of pulses
     rcall delay_100us
     rcall delay_100us
     rcall delay_100us
